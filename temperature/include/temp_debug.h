@@ -19,15 +19,19 @@
 #define LOG_TAG "TEMP"
 #define LOG_BUFFER_SIZE (1024)
 
-#define LOGN (0) /* log level none */
+#define LOGF (0) /* log level fatal */
 #define LOGE (1) /* log level error */
 #define LOGD (2) /* log level debug */
-#define LOGV (3) /* log level verbose */
+#define LOGI (3) /* log level information */
+#define LOGV (4) /* log level verbose */
 
 #define TEMP_DEFAULT_DEBUG_LEVEL (LOGE)
 
+#define TEMP_LOGF(format, args...) TEMP_LOG(LOGF, __FILE__, __LINE__, format, ##args)
 #define TEMP_LOGE(format, args...) TEMP_LOG(LOGE, __FILE__, __LINE__, format, ##args)
 #define TEMP_LOGD(format, args...) TEMP_LOG(LOGD, __FILE__, __LINE__, format, ##args)
+#define TEMP_LOGI(format, args...) TEMP_LOG(LOGI, __FILE__, __LINE__, format, ##args)
+#define TEMP_LOGV(format, args...) TEMP_LOG(LOGV, __FILE__, __LINE__, format, ##args)
 
 extern int  TEMP_get_debug_level(void);
 extern void TEMP_set_debug_level(int level);

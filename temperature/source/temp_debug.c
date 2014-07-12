@@ -22,7 +22,7 @@
 #include "temp_debug.h"
 
 static int temp_debug_level = TEMP_DEFAULT_DEBUG_LEVEL;
-static char *str_level[] = {"N", "E", "D", "V"};
+static char *str_level[] = {"F", "E", "D", "I", "V"};
 
 int TEMP_get_debug_level(void)
 {
