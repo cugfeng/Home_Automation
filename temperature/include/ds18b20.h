@@ -10,7 +10,7 @@
  *       Revision:  none
  *       Compiler:  gcc
  *
- *         Author:  Shawn Sze
+ *         Author:  Shawn Sze, cugfeng@gmail.com
  *   Organization:  
  *
  * =====================================================================================
