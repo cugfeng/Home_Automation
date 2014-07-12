@@ -3,7 +3,7 @@
  *
  *       Filename:  ds18b20.h
  *
- *    Description:  This file provide temperature sensor ds18b20 related APIs.
+ *    Description:  This file provides temperature sensor ds18b20 related APIs.
  *
  *        Version:  1.0
  *        Created:  07/12/2014 09:13:15
