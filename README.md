@@ -7,16 +7,14 @@ Hardware preparation:
   2. Temperature Sensor. I choose DS18B20
   3. IR Transmitter
 
-Raspberry Pi will monitor and record home temperature in every minute. Use computer or mobile device, you can get current temperature, view temperature history, and control airconditioner remotely.
+Raspberry Pi will monitor home temperature. Use computer or mobile device, you can get current temperature and control airconditioner remotely.
 
 This project is still ongoing. Features ready until now are:
-  1. Monitor and record temperatrue on Raspberry Pi
+  1. Monitor temperatrue on Raspberry Pi
+  2. Get current temperature on computer and mobile device
 
 TODO:
-  1. Get current temperature and temperature history on computer
-  2. Get current temperature and temperature history on mobile device
-  3. Control IR transmitter on Raspberry Pi
-  4. Control IR transmitter on computer
-  5. Control IR transmitter on mobile device
+  1. Control IR transmitter on Raspberry Pi
+  2. Control IR transmitter on computer and mobile device
 
 If you have any advice, feel free to contact me at cugfeng#gmail.com.
