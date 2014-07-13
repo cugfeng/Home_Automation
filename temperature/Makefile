@@ -26,5 +26,6 @@ clean:
 	rm -rf test/test_ds18b20 test/test_ds18b20.dSYM
 
 $(MODULE_NAME): $(OBJECTS)
+	@mkdir -p lib
 	gcc -shared -o lib/$@ $^
 
