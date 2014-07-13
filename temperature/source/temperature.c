@@ -75,6 +75,23 @@ static int save_buffer_to_file(TimeTemp *buffer, int size)
     return 0;
 }
 
+static int save_temp_to_file(int temp)
+{
+    FILE *fp;
+    const char *filepath = "/tmp/current_temperature";
+
+    fp = fopen(filepath, "w");
+    if (fp == NULL) {
+        TEMP_LOGE("Failed to open file (%s) for writing!\n", filepath);
+        return -1;
+    }
+
+    fprintf(fp, "%d\n", temp);
+    fclose(fp);
+
+    return 0;
+}
+
 void *temp_monitor_task(void *args)
 {
     int alive = 1;
@@ -84,6 +101,7 @@ void *temp_monitor_task(void *args)
     while (alive) {
         int temp = TEMP_ds18b20_read(DS18B20_ADDRESS);
         printf("Current temperature is %.3f degree\n", temp / 1000.0);
+        save_temp_to_file(temp);
 
         fill_date_time(&(buffer[index]));
         buffer[index].temperature = temp;
