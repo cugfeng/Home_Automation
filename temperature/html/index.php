@@ -1,7 +1,7 @@
 <?php
 
 if (!defined("TEMPERATURE_PATH"))
-	define("TEMPERATURE_PATH", "/tmp/current_temperature"); 
+    define("TEMPERATURE_PATH", "/tmp/current_temperature");
 
 $fp = fopen(TEMPERATURE_PATH, "r"); 
 $temperature = fread($fp, filesize(TEMPERATURE_PATH)); 
@@ -19,18 +19,18 @@ $temperature = $temperature / 1000.0;
 
 <html>
 <head>
-	<title> Current temperature </title>
+    <title> Current temperature </title>
 </head>
 
 <body>
 
 <script language="javascript">
-	function isMobileDevice() {
-		var mobile = (/iphone|ipad|ipod|android|windows\sphone/i.test(navigator.userAgent.toLowerCase()));
-		return mobile;
-	}
+    function isMobileDevice() {
+        var mobile = (/iphone|ipad|ipod|android|windows\sphone/i.test(navigator.userAgent.toLowerCase()));
+        return mobile;
+    }
 
-	if(isMobileDevice()) {
+    if(isMobileDevice()) {
         document.write("<link type=\"text\/css\" rel=\"stylesheet\" href=\"./css/mobile.css\" \/>");
     } else {
         document.write("<link type=\"text\/css\" rel=\"stylesheet\" href=\"./css/pc_mac.css\" \/>");
@@ -43,13 +43,19 @@ $temperature = $temperature / 1000.0;
           <div class="dene">
             <div class="denem">
               <div class="deneme">
-				<?php print tempParts($temperature, 0); ?><span>.<?php print tempParts($temperature, 1); ?></span><strong>&deg;</strong>
+                <?php print tempParts($temperature, 0); ?><span>.<?php print tempParts($temperature, 1); ?></span><strong>&deg;</strong>
               </div>
             </div>
           </div>
         </div>
     </div>
 </div>
+
+<form action="/cgi-bin/temperature.cgi" method="post">
+    <label>Name: </label>
+    <input type="text" name="name">
+    <input type="submit" value="Submit">
+</form>
 
 </body>
 </html>
