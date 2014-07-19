@@ -17,6 +17,7 @@
  */
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
@@ -60,6 +61,9 @@ static int save_buffer_to_file(TimeTemp *buffer, int size)
         char filepath[32] = {0};
 
         strcpy(filepath, "record/");
+        if (access(filepath, F_OK) < 0) {
+            mkdir(filepath, 0755);
+        }
         strcat(filepath, buffer[i].date);
         strcat(filepath, ".txt");
         fp = fopen(filepath, "a+");
