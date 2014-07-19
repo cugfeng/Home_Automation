@@ -12,7 +12,7 @@ LDFLAGS += -Llib -lpthread
 
 MODULE_NAME := libtemp.so
 
-.PHONY: all test clean
+.PHONY: all test clean install uninstall
 
 all: $(MODULE_NAME)
 	gcc $(CFLAGS) $(LDFLAGS) -o temperature main.c -ltemp
@@ -25,7 +25,16 @@ clean:
 	rm -rf temperature temperature.dSYM
 	rm -rf test/test_ds18b20 test/test_ds18b20.dSYM
 
+install:
+	sudo cp lib/libtemp.so /usr/lib
+	sudo cp temperature /usr/bin
+
+uninstall:
+	sudo rm -f /usr/lib/libtemp.so
+	sudo rm -f /usr/bin/temperature
+
 $(MODULE_NAME): $(OBJECTS)
 	@mkdir -p lib
 	gcc -shared -o lib/$@ $^
+	chmod 0644 lib/$@
 
