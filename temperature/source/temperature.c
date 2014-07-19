@@ -17,13 +17,16 @@
  */
 #include <pthread.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
 #include "temp_debug.h"
+#include "temp_util.h"
 #include "ds18b20.h"
 
 #define DS18B20_ADDRESS "28-00042d9aa8ff"
@@ -34,6 +37,11 @@ typedef struct {
     char time[8];  /* hh-mm */
     int  temperature;
 } TimeTemp;
+
+typedef struct {
+    int is_record;
+    char record[TEMP_PATH_MAX_LEN];
+} TempArgs;
 
 static int fill_date_time(TimeTemp *time_temp)
 {
@@ -50,20 +58,23 @@ static int fill_date_time(TimeTemp *time_temp)
     return 0;
 }
 
-static int save_buffer_to_file(TimeTemp *buffer, int size)
+static int save_buffer_to_file(TimeTemp *buffer, int size, const char *path)
 {
     int i;
 
     assert(buffer != NULL);
+    assert(path != NULL);
+    if (access(path, F_OK) < 0) {
+        TEMP_LOGE("Directory (%s) does not exist!\n", path);
+        return -1;
+    }
 
     for (i = 0; i < size; ++i) {
         FILE *fp;
         char filepath[32] = {0};
 
-        strcpy(filepath, "record/");
-        if (access(filepath, F_OK) < 0) {
-            mkdir(filepath, 0755);
-        }
+        strcpy(filepath, path);
+        strcat(filepath, "/");
         strcat(filepath, buffer[i].date);
         strcat(filepath, ".txt");
         fp = fopen(filepath, "a+");
@@ -102,6 +113,10 @@ void *temp_monitor_task(void *args)
     TimeTemp buffer[TEMP_BUFFER_SIZE] = {0};
     int index = 0;
 
+    TempArgs *temp_args = (TempArgs *)args;
+
+    assert(args != NULL);
+
     while (alive) {
         int temp = TEMP_ds18b20_read(DS18B20_ADDRESS);
         printf("Current temperature is %.3f degree\n", temp / 1000.0);
@@ -112,7 +127,9 @@ void *temp_monitor_task(void *args)
 
         ++index;
         if (index >= TEMP_BUFFER_SIZE) {
-            save_buffer_to_file(buffer, TEMP_BUFFER_SIZE);
+            if (temp_args->is_record) {
+                save_buffer_to_file(buffer, TEMP_BUFFER_SIZE, temp_args->record);
+            }
             memset(buffer, sizeof(buffer), 0);
             index = 0;
         }
@@ -124,12 +141,44 @@ void *temp_monitor_task(void *args)
     return NULL;
 }
 
+static void usage(void)
+{
+    printf("Usage:\n");
+    printf("    temperature [options]\n\n");
+    printf("Options:\n");
+    printf("    -r  --record path   Record temperature into path/yyyy-mm-dd.txt\n\n");
+
+    exit(0);
+}
+
 int TEMP_main(int argc, char *argv[])
 {
     int ret;
     pthread_t thread_id;
 
-    ret = pthread_create(&thread_id, NULL, temp_monitor_task, NULL);
+    int ch;
+    TempArgs temp_args;
+    struct option longopts[] = {
+        {"record",  required_argument,  NULL, 'r'},
+        {NULL,      0,                  NULL, 0}
+    };
+
+    memset(&temp_args, 0, sizeof(temp_args));
+    while ((ch = getopt_long(argc, argv, "r:", longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'r':
+                temp_args.is_record = 1;
+                strncpy(temp_args.record, optarg, sizeof(temp_args.record));
+                break;
+
+            default:
+                usage();
+        }
+    }
+    argc -= optind;
+    argv += optind;
+
+    ret = pthread_create(&thread_id, NULL, temp_monitor_task, &temp_args);
     if (ret < 0) {
         TEMP_LOGE("Create thread failed!\n");
         return -1;

@@ -23,9 +23,9 @@
 #include <ctype.h>
 
 #include "temp_debug.h"
+#include "temp_util.h"
 #include "ds18b20.h"
 
-#define PATH_MAX_LEN (128)
 #define ADDR_MAX_LEN (16)
 #define BUFFER_SIZE  (512)
 
@@ -94,7 +94,7 @@ static int ds18b20_decode_temp(const char *buf)
 
 int TEMP_ds18b20_read(const char *address)
 {
-    char path[PATH_MAX_LEN] = {0};
+    char path[TEMP_PATH_MAX_LEN] = {0};
     char buf[BUFFER_SIZE]   = {0};
     char *p_ret;
     FILE *fp;
