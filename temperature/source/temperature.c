@@ -28,9 +28,12 @@
 #include "temp_debug.h"
 #include "temp_util.h"
 #include "ds18b20.h"
+#include "ac.h"
 
 #define DS18B20_ADDRESS "28-00042d9aa8ff"
 #define TEMP_BUFFER_SIZE (6)
+
+static int g_process_alive;
 
 typedef struct {
     char date[12]; /* yyyy-mm-dd */
@@ -93,7 +96,7 @@ static int save_buffer_to_file(TimeTemp *buffer, int size, const char *path)
 static int save_temp_to_file(int temp)
 {
     FILE *fp;
-    const char *filepath = "/tmp/current_temperature";
+    const char *filepath = TEMP_SETTING_CURRENT;
 
     fp = fopen(filepath, "w");
     if (fp == NULL) {
@@ -109,7 +112,6 @@ static int save_temp_to_file(int temp)
 
 void *temp_monitor_task(void *args)
 {
-    int alive = 1;
     TimeTemp buffer[TEMP_BUFFER_SIZE] = {0};
     int index = 0;
 
@@ -117,7 +119,7 @@ void *temp_monitor_task(void *args)
 
     assert(args != NULL);
 
-    while (alive) {
+    while (g_process_alive) {
         int temp = TEMP_ds18b20_read(DS18B20_ADDRESS);
         printf("Current temperature is %.3f degree\n", temp / 1000.0);
         save_temp_to_file(temp);
@@ -134,7 +136,123 @@ void *temp_monitor_task(void *args)
             index = 0;
         }
 
-        sleep(60);
+        sleep(TEMP_MONITOR_TASK_SLEEP);
+    }
+    pthread_exit(NULL);
+
+    return NULL;
+}
+
+static int get_current_temp(void)
+{
+    FILE *fp;
+    const char *filepath = TEMP_SETTING_CURRENT;
+    int ret, current;
+
+    if (access(filepath, F_OK) < 0) {
+        TEMP_LOGD("File (%s) does not exist!\n", filepath);
+        return -1;
+    }
+
+    fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        TEMP_LOGE("Open file (%s) failed!\n", filepath);
+        return -1;
+    }
+
+    ret = fscanf(fp, "%d", &current);
+    if (ret != 1) {
+        TEMP_LOGE("Read current temperature failed!\n");
+        current = -1;
+    }
+
+    fclose(fp);
+    return current;
+}
+
+static int get_target_temp(void)
+{
+    FILE *fp;
+    const char *filepath = TEMP_SETTING_TARGET;
+    int ret, target;
+
+    if (access(filepath, F_OK) < 0) {
+        TEMP_LOGD("File (%s) does not exist!\n", filepath);
+        return -1;
+    }
+
+    fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        TEMP_LOGE("Open file (%s) failed!\n", filepath);
+        return -1;
+    }
+
+    ret = fscanf(fp, "%d", &target);
+    if (ret != 1) {
+        TEMP_LOGE("Read target temperature failed!\n");
+        target = -1;
+    }
+
+    fclose(fp);
+    return target;
+}
+
+static int get_tolerance_temp(void)
+{
+    FILE *fp;
+    const char *filepath = TEMP_SETTING_TOLERANCE;
+    int ret, tolerance;
+
+    if (access(filepath, F_OK) < 0) {
+        TEMP_LOGD("File (%s) does not exist!\n", filepath);
+        return -1;
+    }
+
+    fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        TEMP_LOGE("Open file (%s) failed!\n", filepath);
+        return -1;
+    }
+
+    ret = fscanf(fp, "%d", &tolerance);
+    if (ret != 1) {
+        TEMP_LOGE("Read tolerance temperature failed!\n");
+        tolerance = -1;
+    }
+
+    fclose(fp);
+    return tolerance;
+}
+
+void *temp_setting_task(void *args)
+{
+    while (g_process_alive) {
+        int current, target, tolerance;
+
+        sleep(TEMP_SETTING_TASK_SLEEP);
+
+        current   = get_current_temp();
+        target    = get_target_temp();
+        tolerance = get_tolerance_temp();
+        if (current < 0 || target < 0 || tolerance < 0) {
+            TEMP_LOGD("At least one of current (%d), target (%d) and tolerance (%d)"
+                    "temperature is invalid!\n", target, tolerance);
+            continue;
+        }
+
+        if (current > (target + tolerance)) {
+            printf("Temperature is too high, turn on ac\n");
+            TEMP_ac_turn_on();
+        } else if (current < (target - tolerance)) {
+            printf("Temperature is too low, turn off ac\n");
+            TEMP_ac_turn_off();
+        }
+
+        if (access(TEMP_SETTING_EXIT, F_OK) == 0) {
+            remove(TEMP_SETTING_EXIT);
+            g_process_alive = 0;
+            TEMP_LOGD("Process alive is 0, exit...\n");
+        }
     }
     pthread_exit(NULL);
 
@@ -154,7 +272,7 @@ static void usage(void)
 int TEMP_main(int argc, char *argv[])
 {
     int ret;
-    pthread_t thread_id;
+    pthread_t thread_id_monitor, thread_id_setting;
 
     int ch;
     TempArgs temp_args;
@@ -178,14 +296,28 @@ int TEMP_main(int argc, char *argv[])
     argc -= optind;
     argv += optind;
 
-    ret = pthread_create(&thread_id, NULL, temp_monitor_task, &temp_args);
-    if (ret < 0) {
-        TEMP_LOGE("Create thread failed!\n");
-        return -1;
-    } else {
-        pthread_join(thread_id, NULL);
+    if (access(TEMP_SETTING_DIR, F_OK) < 0) {
+        mkdir(TEMP_SETTING_DIR, 0755);
     }
 
-    return 0;
-}
+    g_process_alive = 1;
+    ret = pthread_create(&thread_id_monitor, NULL, temp_monitor_task, &temp_args);
+    if (ret < 0) {
+        TEMP_LOGE("Create thread monitor failed!\n");
+        ret = -1;
+        goto join_exit_0;
+    }
+    ret = pthread_create(&thread_id_setting, NULL, temp_setting_task, NULL);
+    if (ret < 0) {
+        TEMP_LOGE("Create thread setting failed!\n");
+        ret = -1;
+        goto join_exit_1;
+    }
 
+join_exit_2:
+    pthread_join(thread_id_setting, NULL);
+join_exit_1:
+    pthread_join(thread_id_monitor, NULL);
+join_exit_0:
+    return ret;
+}
