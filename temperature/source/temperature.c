@@ -182,9 +182,9 @@ int TEMP_main(int argc, char *argv[])
     if (ret < 0) {
         TEMP_LOGE("Create thread failed!\n");
         return -1;
+    } else {
+        pthread_join(thread_id, NULL);
     }
-
-    pthread_join(thread_id, NULL);
 
     return 0;
 }
