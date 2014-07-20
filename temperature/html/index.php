@@ -20,6 +20,8 @@ $temperature = $temperature / 1000.0;
 <html>
 <head>
     <title> Current temperature </title>
+    <link type="text/css" rel="stylesheet" href="./css/current_temperature.css" />
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
 </head>
 
 <body>
@@ -51,14 +53,20 @@ $temperature = $temperature / 1000.0;
     </div>
 </div>
 
-<form action="/cgi-bin/temperature.cgi" method="post">
-    <label>Target: </label>
-    <input type="number" name="target">
-    <br>
-    <label>Tolerance: </label>
-    <input type="number" name="tolerance">
-    <br>
-    <input type="submit" value="Submit">
+<form action="/cgi-bin/temperature.cgi" method="post" class="text_form">
+  <table>
+    <tr>
+      <td>Target: </td>
+      <td><input type="number" name="target"></td>
+    </tr>
+    <tr>
+      <td>Tolerance: </td>
+      <td><input type="number" name="tolerance"></td>
+    </tr>
+    <tr>
+      <td><input type="submit" value="Submit"></td>
+    </tr>
+  </table>
 </form>
 
 </body>
