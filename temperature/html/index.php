@@ -1,7 +1,7 @@
 <?php
 
 if (!defined("TEMPERATURE_PATH"))
-    define("TEMPERATURE_PATH", "/tmp/current_temperature");
+    define("TEMPERATURE_PATH", "/tmp/temperature/current");
 
 $fp = fopen(TEMPERATURE_PATH, "r"); 
 $temperature = fread($fp, filesize(TEMPERATURE_PATH)); 
@@ -52,8 +52,12 @@ $temperature = $temperature / 1000.0;
 </div>
 
 <form action="/cgi-bin/temperature.cgi" method="post">
-    <label>Name: </label>
-    <input type="text" name="name">
+    <label>Target: </label>
+    <input type="number" name="target">
+    <br>
+    <label>Tolerance: </label>
+    <input type="number" name="tolerance">
+    <br>
     <input type="submit" value="Submit">
 </form>
 
