@@ -297,7 +297,8 @@ int TEMP_main(int argc, char *argv[])
     argv += optind;
 
     if (access(TEMP_SETTING_DIR, F_OK) < 0) {
-        mkdir(TEMP_SETTING_DIR, 0777);
+        mkdir(TEMP_SETTING_DIR, 0755);
+        chmod(TEMP_SETTING_DIR, 0777);
     }
 
     g_process_alive = 1;
