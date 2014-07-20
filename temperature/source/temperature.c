@@ -236,7 +236,7 @@ void *temp_setting_task(void *args)
         tolerance = get_tolerance_temp();
         if (current < 0 || target < 0 || tolerance < 0) {
             TEMP_LOGD("At least one of current (%d), target (%d) and tolerance (%d)"
-                    "temperature is invalid!\n", target, tolerance);
+                    " temperature is invalid!\n", current, target, tolerance);
             continue;
         }
 
