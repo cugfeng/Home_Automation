@@ -10,7 +10,8 @@ TEMP_SETTING_TOLERANCE = "/tmp/temperature/tolerance"
 TEMP_SETTING_EXIT      = "/tmp/temperature/exit"
 
 if os.access(TEMP_SETTING_DIR, os.F_OK) is False:
-	os.mkdir(TEMP_SETTING_DIR, 0777)
+	os.mkdir(TEMP_SETTING_DIR, 0755)
+	os.chmod(TEMP_SETTING_DIR, 0777)
 
 form      = cgi.FieldStorage()
 target    = form.getvalue('target')
