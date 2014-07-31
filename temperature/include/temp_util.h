@@ -22,6 +22,7 @@
 #define TEMP_SETTING_CURRENT    "/tmp/temperature/current"
 #define TEMP_SETTING_TARGET     "/tmp/temperature/target"
 #define TEMP_SETTING_TOLERANCE  "/tmp/temperature/tolerance"
+#define TEMP_SETTING_AUTOMODE   "/tmp/temperature/automode"
 #define TEMP_SETTING_EXIT       "/tmp/temperature/exit"
 
 #define TEMP_MONITOR_TASK_SLEEP (60)    /* second */

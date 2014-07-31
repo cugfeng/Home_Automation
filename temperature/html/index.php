@@ -64,6 +64,10 @@ $temperature = $temperature / 1000.0;
       <td><input type="number" name="tolerance"></td>
     </tr>
     <tr>
+      <td>Automode: </td>
+      <td><input type="checkbox" name="automode" value="1"></td>
+    </tr>
+    <tr>
       <td><input type="submit" value="Submit"></td>
     </tr>
   </table>

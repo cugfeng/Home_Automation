@@ -224,10 +224,38 @@ static int get_tolerance_temp(void)
     return tolerance;
 }
 
+static int get_automode(void)
+{
+    FILE *fp;
+    const char *filepath = TEMP_SETTING_AUTOMODE;
+    int ret, automode;
+
+    if (access(filepath, F_OK) < 0) {
+        TEMP_LOGD("File (%s) does not exist!\n", filepath);
+        return -1;
+    }
+
+    fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        TEMP_LOGE("Open file (%s) failed!\n", filepath);
+        return -1;
+    }
+
+    ret = fscanf(fp, "%d", &automode);
+    if (ret != 1) {
+        TEMP_LOGE("Read automode failed!\n");
+        automode = -1;
+    }
+
+    fclose(fp);
+    return automode;
+}
+
 void *temp_setting_task(void *args)
 {
     while (g_process_alive) {
         int current, target, tolerance;
+        int automode;
 
         sleep(TEMP_SETTING_TASK_SLEEP);
 
@@ -237,6 +265,17 @@ void *temp_setting_task(void *args)
         if (current < 0 || target < 0 || tolerance < 0) {
             TEMP_LOGD("At least one of current (%d), target (%d) and tolerance (%d)"
                     " temperature is invalid!\n", current, target, tolerance);
+            continue;
+        }
+
+        automode  = get_automode();
+        if (automode == 1) {
+            TEMP_LOGD("Automode is enabled.\n");
+        } else if (automode == 0) {
+            TEMP_LOGD("Automode is disabled.\n");
+            continue;
+        } else {
+            TEMP_LOGD("Automode setting is invalid.\n");
             continue;
         }
 
