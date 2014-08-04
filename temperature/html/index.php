@@ -53,8 +53,13 @@ $temperature = $temperature / 1000.0;
     </div>
 </div>
 
+<div class="box">
 <form action="/cgi-bin/temperature.cgi" method="post" class="text_form">
   <table>
+    <tr>
+      <td>Automode: </td>
+      <td><input type="checkbox" name="automode" value="1"></td>
+    </tr>
     <tr>
       <td>Target: </td>
       <td><input type="number" name="target"></td>
@@ -64,14 +69,11 @@ $temperature = $temperature / 1000.0;
       <td><input type="number" name="tolerance"></td>
     </tr>
     <tr>
-      <td>Automode: </td>
-      <td><input type="checkbox" name="automode" value="1"></td>
-    </tr>
-    <tr>
       <td><input type="submit" value="Submit"></td>
     </tr>
   </table>
 </form>
+</div>
 
 </body>
 </html>
