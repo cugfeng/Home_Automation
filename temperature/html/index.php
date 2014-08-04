@@ -66,7 +66,15 @@ $temperature = $temperature / 1000.0;
     </tr>
     <tr>
       <td>Tolerance: </td>
-      <td><input type="number" name="tolerance"></td>
+      <td>
+      <select id="id_tolerance" name="tolerance">
+        <option value="0000">0.0</option>
+        <option value="0500">0.5</option>
+        <option value="1000">1.0</option>
+        <option value="1500">1.5</option>
+        <option value="2000">2.0</option>
+      </select>
+      </td>
     </tr>
     <tr>
       <td><input type="submit" value="Submit"></td>

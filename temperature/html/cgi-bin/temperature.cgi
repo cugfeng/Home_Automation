@@ -36,7 +36,7 @@ fd_target.write(str(target * 1000))
 fd_target.close()
 
 fd_tolerance = open(TEMP_SETTING_TOLERANCE, "w+")
-fd_tolerance.write(str(tolerance * 1000))
+fd_tolerance.write(str(tolerance))
 fd_tolerance.close()
 
 fd_automode = open(TEMP_SETTING_AUTOMODE, "w+")
@@ -49,8 +49,8 @@ print "<head>"
 print "<title>CGI Program</title>"
 print "</head>"
 print "<body>"
-print "<h2>Target temperature   : %s</h2>" % (target)
-print "<h2>Tolerance temperature: %s</h2>" % (tolerance)
-print "<h2>Auto mode            : %s</h2>" % (automode)
+print "<h2>Target temperature   : %d</h2>" % (target)
+print "<h2>Tolerance temperature: %.1f</h2>" % (tolerance / 1000.0)
+print "<h2>Auto mode            : %d</h2>" % (automode)
 print "</body>"
 print "</html>"
