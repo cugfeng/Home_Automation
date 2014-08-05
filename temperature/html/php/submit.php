@@ -14,6 +14,11 @@ function _post($var) {
         return null;
 }
 
+if (!file_exists($TEMP_SETTING_DIR)) {
+    mkdir($TEMP_SETTING_DIR, 0755);
+    chmod($TEMP_SETTING_DIR, 0777);
+}
+
 $automode = _post("automode");
 if ($automode == null)
     $automode = "0";
