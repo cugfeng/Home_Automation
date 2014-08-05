@@ -22,6 +22,7 @@ $temperature = $temperature / 1000.0;
     <title> Current temperature </title>
     <link type="text/css" rel="stylesheet" href="./css/current_temperature.css" />
     <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
+    <script src="./jquery/jquery-2.1.1.js"></script>
 </head>
 
 <body>
@@ -54,7 +55,7 @@ $temperature = $temperature / 1000.0;
 </div>
 
 <div class="box">
-<form action="/cgi-bin/temperature.cgi" method="post" class="text_form">
+<form id="id_form" class="text_form">
   <table>
     <tr>
       <td>Automode: </td>
@@ -82,6 +83,16 @@ $temperature = $temperature / 1000.0;
   </table>
 </form>
 </div>
+
+<script  language="javascript">
+    $("#id_form").submit(function(e) {
+        e.preventDefault();
+        $.post("./php/submit.php", $("#id_form").serialize(),
+            function(data) {
+                alert(data);
+            });
+    });
+</script>
 
 </body>
 </html>
