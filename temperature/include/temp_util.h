@@ -25,5 +25,5 @@
 #define TEMP_SETTING_AUTOMODE   "/tmp/temperature/automode"
 #define TEMP_SETTING_EXIT       "/tmp/temperature/exit"
 
-#define TEMP_MONITOR_TASK_SLEEP (60)    /* second */
-#define TEMP_SETTING_TASK_SLEEP (300)   /* second */
+#define TEMP_MONITOR_TASK_SLEEP (30)    /* second */
+#define TEMP_SETTING_TASK_SLEEP (60)    /* second */
