@@ -1,0 +1,99 @@
+<html>
+<head>
+    <title> Current temperature </title>
+    <link type="text/css" rel="stylesheet" href="./css/current_temperature.css" />
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
+    <script src="./jquery/jquery-2.1.1.js"></script>
+
+    <script language="javascript">
+        function isMobileDevice() {
+            var mobile = (/iphone|ipad|ipod|android|windows\sphone/i.test(navigator.userAgent.toLowerCase()));
+            return mobile;
+        }
+
+        if(isMobileDevice()) {
+            document.write("<link type=\"text\/css\" rel=\"stylesheet\" href=\"./css/mobile.css\" \/>");
+        } else {
+            document.write("<link type=\"text\/css\" rel=\"stylesheet\" href=\"./css/pc_mac.css\" \/>");
+        }
+    </script>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="de">
+        <div class="den">
+          <div class="dene">
+            <div class="denem">
+              <div class="deneme">
+                <label id="id_l_a">0</label><span>.<label id="id_l_b">0</label></span><strong>&deg;</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+</div>
+
+<div class="box">
+<form id="id_form" class="text_form">
+  <table>
+    <tr>
+      <td>Automode: </td>
+      <td><input type="checkbox" name="automode" value="1"></td>
+    </tr>
+    <tr>
+      <td>Target: </td>
+      <td><input type="number" name="target"></td>
+    </tr>
+    <tr>
+      <td>Tolerance: </td>
+      <td>
+      <select id="id_tolerance" name="tolerance">
+        <option value="0000">0.0</option>
+        <option value="0500">0.5</option>
+        <option value="1000">1.0</option>
+        <option value="1500">1.5</option>
+        <option value="2000">2.0</option>
+      </select>
+      </td>
+    </tr>
+    <tr>
+      <td><input type="submit" value="Submit"></td>
+    </tr>
+  </table>
+</form>
+</div>
+
+<script language="javascript">
+
+    function get_current_temperature(data) {
+        $.get("./php/current.php", "", function(data) {
+            var temp = data.valueOf();
+            var a = Math.floor(temp / 1000);
+            var b = Math.floor((temp % 1000) / 100);
+
+            $("div.deneme").hide();
+            $("#id_l_a").text(a.toString());
+            $("#id_l_b").text(b.toString());
+            $("div.deneme").show();
+        });
+    }
+
+    $(document).ready(function() {
+        $("#id_form").submit(function(e) {
+            e.preventDefault();
+            $.post("./php/submit.php", $("#id_form").serialize(),
+                function(data) {
+                    alert(data);
+                });
+        });
+
+        get_current_temperature();
+        window.setInterval(get_current_temperature, 10000);
+    });
+
+</script>
+
+</body>
+</html>
