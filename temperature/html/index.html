@@ -59,7 +59,7 @@
       </td>
     </tr>
     <tr>
-      <td><input type="submit" value="Submit"></td>
+      <td><input id="id_submit" type="submit" value="Submit"></td>
     </tr>
   </table>
 </form>
@@ -108,6 +108,12 @@
         });
     }
 
+    function disable_form(flag) {
+        $("#id_target").prop("disabled", flag);
+        $("#id_tolerance").prop("disabled", flag);
+        $("#id_submit").prop("disabled", flag);
+    }
+
     $(document).ready(function() {
         $("#id_form").submit(function(e) {
             var data = {
@@ -120,6 +126,16 @@
             $.post("./php/submit.php", data, function(data) {
                     alert(data);
             });
+        });
+
+        $("#id_automode").click(function() {
+            $this = $(this);
+
+            if ($this.is(":checked")) {
+                disable_form(false);
+            } else {
+                disable_form(true);
+            }
         });
 
         load_setting();
