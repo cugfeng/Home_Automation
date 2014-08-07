@@ -29,6 +29,7 @@
 #include "temp_util.h"
 #include "ds18b20.h"
 #include "ac.h"
+#include "json.h"
 
 #define DS18B20_ADDRESS "28-00042d9aa8ff"
 #define TEMP_BUFFER_SIZE (6)
@@ -170,105 +171,33 @@ static int get_current_temp(void)
     return current;
 }
 
-static int get_target_temp(void)
-{
-    FILE *fp;
-    const char *filepath = TEMP_SETTING_TARGET;
-    int ret, target;
-
-    if (access(filepath, F_OK) < 0) {
-        TEMP_LOGD("File (%s) does not exist!\n", filepath);
-        return -1;
-    }
-
-    fp = fopen(filepath, "r");
-    if (fp == NULL) {
-        TEMP_LOGE("Open file (%s) failed!\n", filepath);
-        return -1;
-    }
-
-    ret = fscanf(fp, "%d", &target);
-    if (ret != 1) {
-        TEMP_LOGE("Read target temperature failed!\n");
-        target = -1;
-    }
-
-    fclose(fp);
-    return target;
-}
-
-static int get_tolerance_temp(void)
-{
-    FILE *fp;
-    const char *filepath = TEMP_SETTING_TOLERANCE;
-    int ret, tolerance;
-
-    if (access(filepath, F_OK) < 0) {
-        TEMP_LOGD("File (%s) does not exist!\n", filepath);
-        return -1;
-    }
-
-    fp = fopen(filepath, "r");
-    if (fp == NULL) {
-        TEMP_LOGE("Open file (%s) failed!\n", filepath);
-        return -1;
-    }
-
-    ret = fscanf(fp, "%d", &tolerance);
-    if (ret != 1) {
-        TEMP_LOGE("Read tolerance temperature failed!\n");
-        tolerance = -1;
-    }
-
-    fclose(fp);
-    return tolerance;
-}
-
-static int get_automode(void)
-{
-    FILE *fp;
-    const char *filepath = TEMP_SETTING_AUTOMODE;
-    int ret, automode;
-
-    if (access(filepath, F_OK) < 0) {
-        TEMP_LOGD("File (%s) does not exist!\n", filepath);
-        return -1;
-    }
-
-    fp = fopen(filepath, "r");
-    if (fp == NULL) {
-        TEMP_LOGE("Open file (%s) failed!\n", filepath);
-        return -1;
-    }
-
-    ret = fscanf(fp, "%d", &automode);
-    if (ret != 1) {
-        TEMP_LOGE("Read automode failed!\n");
-        automode = -1;
-    }
-
-    fclose(fp);
-    return automode;
-}
-
 void *temp_setting_task(void *args)
 {
     while (g_process_alive) {
         int current, target, tolerance;
         int automode;
+        int ret;
 
         sleep(TEMP_SETTING_TASK_SLEEP);
 
+        ret = json_parse(TEMP_SETTING_JSON);
+        if (ret < 0) {
+            TEMP_LOGD("Parse %s failed!\n", TEMP_SETTING_JSON);
+            continue;
+        }
+
         current   = get_current_temp();
-        target    = get_target_temp();
-        tolerance = get_tolerance_temp();
+        target    = json_get_target_temp();
+        tolerance = json_get_tolerance_temp();
         if (current < 0 || target < 0 || tolerance < 0) {
             TEMP_LOGD("At least one of current (%d), target (%d) and tolerance (%d)"
                     " temperature is invalid!\n", current, target, tolerance);
             continue;
         }
+        TEMP_LOGD("Current (%d) target (%d) tolerance (%d)\n",
+                current, target, tolerance);
 
-        automode  = get_automode();
+        automode  = json_get_automode();
         if (automode == 1) {
             TEMP_LOGD("Automode is enabled.\n");
         } else if (automode == 0) {
@@ -285,12 +214,6 @@ void *temp_setting_task(void *args)
         } else if (current < (target - tolerance)) {
             printf("Temperature is too low, turn off ac\n");
             TEMP_ac_turn_off();
-        }
-
-        if (access(TEMP_SETTING_EXIT, F_OK) == 0) {
-            remove(TEMP_SETTING_EXIT);
-            g_process_alive = 0;
-            TEMP_LOGD("Process alive is 0, exit...\n");
         }
     }
     pthread_exit(NULL);
@@ -352,6 +275,17 @@ int TEMP_main(int argc, char *argv[])
         TEMP_LOGE("Create thread setting failed!\n");
         ret = -1;
         goto join_exit_1;
+    }
+
+    while (1) {
+        if (access(TEMP_SETTING_EXIT, F_OK) == 0) {
+            remove(TEMP_SETTING_EXIT);
+            g_process_alive = 0;
+            TEMP_LOGD("Process alive is 0, exit...\n");
+            break;
+        }
+
+        sleep(TEMP_MAIN_TASK_SLEEP);
     }
 
 join_exit_2:
