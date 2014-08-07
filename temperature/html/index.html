@@ -40,21 +40,21 @@
   <table>
     <tr>
       <td>Automode: </td>
-      <td><input type="checkbox" name="automode" value="1"></td>
+      <td><input id="id_automode" type="checkbox"></td>
     </tr>
     <tr>
       <td>Target: </td>
-      <td><input type="number" name="target"></td>
+      <td><input id="id_target" type="number"></td>
     </tr>
     <tr>
       <td>Tolerance: </td>
       <td>
-      <select id="id_tolerance" name="tolerance">
-        <option value="0000">0.0</option>
-        <option value="0500">0.5</option>
-        <option value="1000">1.0</option>
-        <option value="1500">1.5</option>
-        <option value="2000">2.0</option>
+      <select id="id_tolerance">
+        <option value=0>0.0</option>
+        <option value=500>0.5</option>
+        <option value=1000>1.0</option>
+        <option value=1500>1.5</option>
+        <option value=2000>2.0</option>
       </select>
       </td>
     </tr>
@@ -67,28 +67,62 @@
 
 <script language="javascript">
 
-    function get_current_temperature(data) {
+    function get_current_temperature() {
         $.get("./php/current.php", "", function(data) {
-            var temp = data.valueOf();
-            var a = Math.floor(temp / 1000);
-            var b = Math.floor((temp % 1000) / 100);
+            if (data.length > 0) {
+                var temp = parseInt(data);
+                var a = Math.floor(temp / 1000);
+                var b = Math.floor((temp % 1000) / 100);
 
-            $("div.deneme").hide();
-            $("#id_l_a").text(a.toString());
-            $("#id_l_b").text(b.toString());
-            $("div.deneme").show();
+                $("div.deneme").hide();
+                $("#id_l_a").text(a.toString());
+                $("#id_l_b").text(b.toString());
+                $("div.deneme").show();
+            }
+        });
+    }
+
+    function load_setting() {
+        $.get("./php/load.php", "", function(data) {
+            if (data.length > 0) {
+                var setting = JSON.parse(data);
+                var target  = setting.target / 1000;
+                var tolerance = setting.tolerance;
+
+                $("#id_form").hide();
+                if (setting.automode == "1") {
+                    $("#id_automode").prop("checked", true);
+                } else {
+                    $("#id_automode").prop("checked", false);
+                }
+                if (target < 0) {
+                    target = 0;
+                }
+                $("#id_target").val(target);
+                if (tolerance < 0) {
+                    tolerance = 0;
+                }
+                $("#id_tolerance").val(tolerance);
+                $("#id_form").show();
+            }
         });
     }
 
     $(document).ready(function() {
         $("#id_form").submit(function(e) {
+            var data = {
+                "automode": $("#id_automode").prop("checked") ? 1 : 0,
+                "target": $("#id_target").val() * 1000,
+                "tolerance": $("#id_tolerance").val()
+            };
+
             e.preventDefault();
-            $.post("./php/submit.php", $("#id_form").serialize(),
-                function(data) {
+            $.post("./php/submit.php", data, function(data) {
                     alert(data);
-                });
+            });
         });
 
+        load_setting();
         get_current_temperature();
         window.setInterval(get_current_temperature, 10000);
     });
