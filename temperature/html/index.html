@@ -82,6 +82,11 @@
         });
     }
 
+    function disable_form(flag) {
+        $("#id_target").prop("disabled", flag);
+        $("#id_tolerance").prop("disabled", flag);
+    }
+
     function load_setting() {
         $.get("./php/load.php", "", function(data) {
             if (data.length > 0) {
@@ -92,8 +97,10 @@
                 $("#id_form").hide();
                 if (setting.automode == "1") {
                     $("#id_automode").prop("checked", true);
+                    disable_form(false);
                 } else {
                     $("#id_automode").prop("checked", false);
+                    disable_form(true);
                 }
                 if (target < 0) {
                     target = 0;
@@ -106,11 +113,6 @@
                 $("#id_form").show();
             }
         });
-    }
-
-    function disable_form(flag) {
-        $("#id_target").prop("disabled", flag);
-        $("#id_tolerance").prop("disabled", flag);
     }
 
     $(document).ready(function() {
