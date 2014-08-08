@@ -48,7 +48,7 @@ static int ds18b20_verify_crc(const char *buf)
     ++crc;
 
     if (strncmp(crc, "YES", 3) == 0) {
-        TEMP_LOGD("CRC verify success!\n");
+        TEMP_LOGI("CRC verify success!\n");
         return CRC_YES;
     } else if (strncmp(crc, "NO", 2) == 0) {
         TEMP_LOGD("CRC verify failed!\n");
@@ -83,7 +83,7 @@ static int ds18b20_decode_temp(const char *buf)
 
     if (found == 1) {
         i_temp = atoi(p_temp);
-        TEMP_LOGD("Temperature is %d\n", i_temp);
+        TEMP_LOGI("Temperature is %d\n", i_temp);
     } else {
         TEMP_LOGE("Cannot find temperature in buffer (%s)!\n", buf);
         i_temp = -1;

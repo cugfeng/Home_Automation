@@ -25,7 +25,7 @@
 #define LOGI (3) /* log level information */
 #define LOGV (4) /* log level verbose */
 
-#define TEMP_DEFAULT_DEBUG_LEVEL (LOGE)
+#define TEMP_DEFAULT_DEBUG_LEVEL (LOGD)
 
 #define TEMP_LOGF(format, args...) TEMP_LOG(LOGF, __FILE__, __LINE__, format, ##args)
 #define TEMP_LOGE(format, args...) TEMP_LOG(LOGE, __FILE__, __LINE__, format, ##args)

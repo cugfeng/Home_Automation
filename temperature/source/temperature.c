@@ -122,7 +122,7 @@ void *temp_monitor_task(void *args)
 
     while (g_process_alive) {
         int temp = TEMP_ds18b20_read(DS18B20_ADDRESS);
-        printf("Current temperature is %.3f degree\n", temp / 1000.0);
+        TEMP_LOGI("Current temperature is %.3f degree\n", temp / 1000.0);
         save_temp_to_file(temp);
 
         fill_date_time(&(buffer[index]));
@@ -194,7 +194,7 @@ void *temp_setting_task(void *args)
                     " temperature is invalid!\n", current, target, tolerance);
             continue;
         }
-        TEMP_LOGD("Current (%d) target (%d) tolerance (%d)\n",
+        TEMP_LOGI("Current (%d) target (%d) tolerance (%d)\n",
                 current, target, tolerance);
 
         automode  = json_get_automode();
@@ -209,10 +209,10 @@ void *temp_setting_task(void *args)
         }
 
         if (current > (target + tolerance)) {
-            printf("Temperature is too high, turn on ac\n");
+            TEMP_LOGD("Temperature is too high, turn on ac\n");
             TEMP_ac_turn_on();
         } else if (current < (target - tolerance)) {
-            printf("Temperature is too low, turn off ac\n");
+            TEMP_LOGD("Temperature is too low, turn off ac\n");
             TEMP_ac_turn_off();
         }
     }
