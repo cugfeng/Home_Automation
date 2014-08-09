@@ -36,6 +36,8 @@
 
 static int g_process_alive;
 static int g_current_temp = -1;
+static pthread_mutex_t g_mutex;
+static pthread_cond_t  g_cond;
 
 typedef struct {
     char date[12]; /* yyyy-mm-dd */
@@ -116,6 +118,10 @@ void *temp_monitor_task(void *args)
 {
     TimeTemp buffer[TEMP_BUFFER_SIZE] = {0};
     int index = 0;
+    struct timespec sleep_time = {
+        .tv_sec  = 0,
+        .tv_nsec = 0
+    };
 
     TempArgs *temp_args = (TempArgs *)args;
 
@@ -139,8 +145,16 @@ void *temp_monitor_task(void *args)
             index = 0;
         }
 
-        sleep(TEMP_MONITOR_TASK_SLEEP);
+        sleep_time.tv_sec = TEMP_MONITOR_TASK_SLEEP + time(NULL);
+        pthread_mutex_lock(&g_mutex);
+        if (g_process_alive) {
+            TEMP_LOGV("Thread monitor timed wait...enter\n");
+            pthread_cond_timedwait(&g_cond, &g_mutex, &sleep_time);
+            TEMP_LOGV("Thread monitor timed wait...leave\n");
+        }
+        pthread_mutex_unlock(&g_mutex);
     }
+    TEMP_LOGD("Thread monitor has exited!\n");
     pthread_exit(NULL);
 
     return NULL;
@@ -212,9 +226,23 @@ void *temp_setting_task(void *args)
         int to_hour, to_minute;
         const char *from_ampm;
         const char *to_ampm;
+        struct timespec sleep_time = {
+            .tv_sec  = 0,
+            .tv_nsec = 0
+        };
         int ret;
 
-        sleep(TEMP_SETTING_TASK_SLEEP);
+        sleep_time.tv_sec = TEMP_SETTING_TASK_SLEEP + time(NULL);
+        pthread_mutex_lock(&g_mutex);
+        if (g_process_alive) {
+            TEMP_LOGV("Thread setting timed wait...enter\n");
+            pthread_cond_timedwait(&g_cond, &g_mutex, &sleep_time);
+            TEMP_LOGV("Thread setting timed wait...leave\n");
+        }
+        pthread_mutex_unlock(&g_mutex);
+        if (g_process_alive == 0) {
+            break;
+        }
 
         current = g_current_temp;
         if (current < 0) {
@@ -262,6 +290,7 @@ void *temp_setting_task(void *args)
             }
         }
     }
+    TEMP_LOGD("Thread setting has exited!\n");
     pthread_exit(NULL);
 
     return NULL;
@@ -309,6 +338,9 @@ int TEMP_main(int argc, char *argv[])
         chmod(TEMP_SETTING_DIR, 0777);
     }
 
+    pthread_mutex_init(&g_mutex, NULL);
+    pthread_cond_init(&g_cond, NULL);
+
     g_process_alive = 1;
     ret = pthread_create(&thread_id_monitor, NULL, temp_monitor_task, &temp_args);
     if (ret < 0) {
@@ -326,8 +358,11 @@ int TEMP_main(int argc, char *argv[])
     while (1) {
         if (access(TEMP_SETTING_EXIT, F_OK) == 0) {
             remove(TEMP_SETTING_EXIT);
+            pthread_mutex_lock(&g_mutex);
             g_process_alive = 0;
-            TEMP_LOGD("Process alive is 0, exit...\n");
+            TEMP_LOGD("Process alive has been changed to 0, exiting...\n");
+            pthread_cond_broadcast(&g_cond);
+            pthread_mutex_unlock(&g_mutex);
             break;
         }
 
@@ -339,5 +374,7 @@ join_exit_2:
 join_exit_1:
     pthread_join(thread_id_monitor, NULL);
 join_exit_0:
+    pthread_cond_destroy(&g_cond);
+    pthread_mutex_destroy(&g_mutex);
     return ret;
 }

@@ -25,4 +25,4 @@
 
 #define TEMP_MONITOR_TASK_SLEEP (30)    /* second */
 #define TEMP_SETTING_TASK_SLEEP (60)    /* second */
-#define TEMP_MAIN_TASK_SLEEP    (10)    /* second */
+#define TEMP_MAIN_TASK_SLEEP    (03)    /* second */
