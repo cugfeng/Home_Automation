@@ -29,12 +29,32 @@
 
 enum {
     AUTOMODE = 0,
+    FROM_HOUR,
+    FROM_MINUTE,
+    FROM_AMPM,
+    TO_HOUR,
+    TO_MINUTE,
+    TO_AMPM,
     TARGET,
     TOLERANCE,
     ID_MAX
 };
 static int setting[ID_MAX];
-const char *keys[ID_MAX] = {"automode", "target", "tolerance"};
+const char *keys[ID_MAX] = {
+    "automode",
+    "from_hour",
+    "from_minute",
+    "from_ampm",
+    "to_hour",
+    "to_minute",
+    "to_ampm",
+    "target",
+    "tolerance"
+};
+const char *ampm[2] = {
+    "AM",
+    "PM"
+};
 
 int json_read_file(const char *filepath, char **json)
 {
@@ -91,7 +111,7 @@ int json_parse(const char *filepath)
     char *json;
     jsmn_parser parser;
     jsmntok_t tokens[MAX_JSON_TOKENS];
-    int i, j;
+    int i, j, k;
 
     for (i = 0; i < ID_MAX; ++i) {
         setting[i] = -1;
@@ -118,14 +138,24 @@ int json_parse(const char *filepath)
 
         /* key must be string */
         assert(key->type == JSMN_STRING);
-        /* value must be integer */
-        assert(val->type == JSMN_PRIMITIVE);
+        /* value must be string or integer */
+        assert(val->type == JSMN_STRING || val->type == JSMN_PRIMITIVE);
 
         for (j = 0; j < sizeof(keys)/sizeof(char *); ++j) {
             if (strncmp(json + key->start, keys[j], key->end - key->start) == 0
                     && strlen(keys[j]) == (key->end - key->start)) {
                 json[val->end] = '\0';
-                setting[j] = atoi(json + val->start);
+                if (val->type == JSMN_STRING) {
+                    for (k = 0; k < sizeof(ampm)/sizeof(char *); ++k) {
+                        if (strncmp(json + val->start, ampm[k], val->end - val->start) == 0
+                                && strlen(ampm[k]) == (val->end - val->start)) {
+                            setting[j] = k;
+                            break;
+                        }
+                    }
+                } else {
+                    setting[j] = atoi(json + val->start);
+                }
                 break;
             }
         }
@@ -140,6 +170,36 @@ exit:
 int json_get_automode(void)
 {
     return setting[AUTOMODE];
+}
+
+int json_get_from_hour(void)
+{
+    return setting[FROM_HOUR];
+}
+
+int json_get_from_minute(void)
+{
+    return setting[FROM_MINUTE];
+}
+
+const char *json_get_from_ampm(void)
+{
+    return ampm[setting[FROM_AMPM]];
+}
+
+int json_get_to_hour(void)
+{
+    return setting[TO_HOUR];
+}
+
+int json_get_to_minute(void)
+{
+    return setting[TO_MINUTE];
+}
+
+const char *json_get_to_ampm(void)
+{
+    return ampm[setting[TO_AMPM]];
 }
 
 int json_get_target_temp(void)

@@ -35,6 +35,7 @@
 #define TEMP_BUFFER_SIZE (6)
 
 static int g_process_alive;
+static int g_current_temp = -1;
 
 typedef struct {
     char date[12]; /* yyyy-mm-dd */
@@ -123,6 +124,7 @@ void *temp_monitor_task(void *args)
     while (g_process_alive) {
         int temp = TEMP_ds18b20_read(DS18B20_ADDRESS);
         TEMP_LOGI("Current temperature is %.3f degree\n", temp / 1000.0);
+        g_current_temp = temp;
         save_temp_to_file(temp);
 
         fill_date_time(&(buffer[index]));
@@ -144,58 +146,87 @@ void *temp_monitor_task(void *args)
     return NULL;
 }
 
-static int get_current_temp(void)
+static int hour_12_to_24(int hour, const char *ampm)
 {
-    FILE *fp;
-    const char *filepath = TEMP_SETTING_CURRENT;
-    int ret, current;
+    assert(1<=hour && hour <= 12);
 
-    if (access(filepath, F_OK) < 0) {
-        TEMP_LOGD("File (%s) does not exist!\n", filepath);
+    if (strcmp(ampm, "AM") == 0) {
+        if (hour <= 11) {
+            return hour;
+        } else {
+            return hour - 12;
+        }
+    } else if (strcmp(ampm, "PM") == 0) {
+        if (hour <= 11) {
+            return hour + 12;
+        } else {
+            return hour;
+        }
+    } else {
+        assert(0);
         return -1;
     }
+}
 
-    fp = fopen(filepath, "r");
-    if (fp == NULL) {
-        TEMP_LOGE("Open file (%s) failed!\n", filepath);
-        return -1;
+static inline int hour_minute_to_minute(int hour, int minute)
+{
+    return (hour * 60 + minute);
+}
+
+int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
+        int to_hour, int to_minute, const char *to_ampm)
+{
+    time_t current_time;
+    struct tm *time_formated;
+    int from_hour_24, to_hour_24;
+    int current_total_minute, from_total_minute, to_total_minute;
+
+    current_time = time(NULL);
+    time_formated = localtime(&current_time);
+    current_total_minute = hour_minute_to_minute(
+            time_formated->tm_hour, time_formated->tm_min);
+
+    from_hour_24 = hour_12_to_24(from_hour, from_ampm);
+    from_total_minute = hour_minute_to_minute(from_hour_24, from_minute);
+
+    to_hour_24 = hour_12_to_24(to_hour, to_ampm);
+    to_total_minute = hour_minute_to_minute(to_hour_24, to_minute);
+    if (to_total_minute < from_total_minute) {
+        to_total_minute += 24 * 60;
     }
 
-    ret = fscanf(fp, "%d", &current);
-    if (ret != 1) {
-        TEMP_LOGE("Read current temperature failed!\n");
-        current = -1;
+    if (from_total_minute <= current_total_minute
+            && current_total_minute <= to_total_minute) {
+        return 1;
+    } else {
+        return 0;
     }
-
-    fclose(fp);
-    return current;
 }
 
 void *temp_setting_task(void *args)
 {
     while (g_process_alive) {
-        int current, target, tolerance;
-        int automode;
+        int current;
+        int automode, target, tolerance;
+        int from_hour, from_minute;
+        int to_hour, to_minute;
+        const char *from_ampm;
+        const char *to_ampm;
         int ret;
 
         sleep(TEMP_SETTING_TASK_SLEEP);
+
+        current = g_current_temp;
+        if (current < 0) {
+            TEMP_LOGD("Current temperature (%d) is invalid!\n", current);
+            continue;
+        }
 
         ret = json_parse(TEMP_SETTING_JSON);
         if (ret < 0) {
             TEMP_LOGD("Parse %s failed!\n", TEMP_SETTING_JSON);
             continue;
         }
-
-        current   = get_current_temp();
-        target    = json_get_target_temp();
-        tolerance = json_get_tolerance_temp();
-        if (current < 0 || target < 0 || tolerance < 0) {
-            TEMP_LOGD("At least one of current (%d), target (%d) and tolerance (%d)"
-                    " temperature is invalid!\n", current, target, tolerance);
-            continue;
-        }
-        TEMP_LOGI("Current (%d) target (%d) tolerance (%d)\n",
-                current, target, tolerance);
 
         automode  = json_get_automode();
         if (automode == 1) {
@@ -208,12 +239,27 @@ void *temp_setting_task(void *args)
             continue;
         }
 
-        if (current > (target + tolerance)) {
-            TEMP_LOGD("Temperature is too high, turn on ac\n");
-            TEMP_ac_turn_on();
-        } else if (current < (target - tolerance)) {
-            TEMP_LOGD("Temperature is too low, turn off ac\n");
-            TEMP_ac_turn_off();
+        from_hour   = json_get_from_hour();
+        from_minute = json_get_from_minute();
+        from_ampm   = json_get_from_ampm();
+        to_hour     = json_get_to_hour();
+        to_minute   = json_get_to_minute();
+        to_ampm     = json_get_to_ampm();
+        TEMP_LOGI("from (%02d:%02d %s) to (%02d:%02d %s)\n",
+                from_hour, from_minute, from_ampm,
+                to_hour, to_minute, to_ampm);
+        if (current_time_in_range(from_hour, from_minute, from_ampm,
+                    to_hour, to_minute, to_ampm) == 1) {
+            target      = json_get_target_temp();
+            tolerance   = json_get_tolerance_temp();
+            TEMP_LOGI("target (%d) tolerance (%d)\n", target, tolerance);
+            if (current > (target + tolerance)) {
+                TEMP_LOGD("Temperature is too high, turn on ac\n");
+                TEMP_ac_turn_on();
+            } else if (current < (target - tolerance)) {
+                TEMP_LOGD("Temperature is too low, turn off ac\n");
+                TEMP_ac_turn_off();
+            }
         }
     }
     pthread_exit(NULL);
