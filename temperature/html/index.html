@@ -39,24 +39,31 @@
 <form id="id_form" class="text_form">
   <table>
     <tr>
-      <td>Automode: </td>
-      <td><input id="id_automode" type="checkbox"></td>
-    </tr>
-    <tr>
-      <td>Target: </td>
-      <td><input id="id_target" type="number"></td>
-    </tr>
-    <tr>
-      <td>Tolerance: </td>
+      <td>Automode:</td>
       <td>
-      <select id="id_tolerance">
-        <option value=0>0.0</option>
-        <option value=500>0.5</option>
-        <option value=1000>1.0</option>
-        <option value=1500>1.5</option>
-        <option value=2000>2.0</option>
-      </select>
+        <input id="id_hidden" type="hidden" value="0">
+        <input id="id_automode" type="checkbox" checked-name="automode" value="1">
       </td>
+    </tr>
+    <tr>
+      <td>From:</td>
+      <td><select class="ed" id="id_f_h" name="from_hour"></td>
+      <td><select class="ed" id="id_f_m" name="from_minute"></td>
+      <td><select class="ed" id="id_f_ampm" name="from_ampm"></td>
+    </tr>
+    <tr>
+      <td>To:</td>
+      <td><select class="ed" id="id_t_h" name="to_hour"></td>
+      <td><select class="ed" id="id_t_m" name="to_minute"></td>
+      <td><select class="ed" id="id_t_ampm" name="to_ampm"></td>
+    </tr>
+    <tr>
+      <td>Target:</td>
+      <td><select class="ed" id="id_target" name="target"></td>
+    </tr>
+    <tr>
+      <td>Tolerance:</td>
+      <td><select class="ed" id="id_tolerance" name="tolerance"></td>
     </tr>
     <tr>
       <td><input id="id_submit" type="submit" value="Submit"></td>
@@ -66,6 +73,36 @@
 </div>
 
 <script language="javascript">
+
+    function pad(num) {
+        var s = num+"";
+        if (s.length < 2) s = "0" + s;
+        return s;
+    }
+
+    function gen_html() {
+        var a = ["AM", "PM"];
+
+        for (i=1; i<=12; i++) {
+            $("#id_f_h").append($("<option>", {"value": i}).text(pad(i)));
+            $("#id_t_h").append($("<option>", {"value": i}).text(pad(i)));
+        }
+        for (i=0; i<=55; i=i+5) {
+            $("#id_f_m").append($("<option>", {"value": i}).text(pad(i)));
+            $("#id_t_m").append($("<option>", {"value": i}).text(pad(i)));
+        }
+        for (i=0; i<a.length; i++) {
+            $("#id_f_ampm").append($("<option>", {"value": a[i]}).text(a[i]));
+            $("#id_t_ampm").append($("<option>", {"value": a[i]}).text(a[i]));
+        }
+        for (i=0; i<12; i++) {
+            var target = 20 + i;
+            $("#id_target").append($("<option>", {"value": target * 1000}).text(target));
+        }
+        for (i=0; i<=3; i=i+0.5) {
+            $("#id_tolerance").append($("<option>", {"value": i * 1000}).text(i.toFixed(1)));
+        }
+    }
 
     function get_current_temperature() {
         $.get("./php/current.php", "", function(data) {
@@ -83,33 +120,34 @@
     }
 
     function disable_form(flag) {
-        $("#id_target").prop("disabled", flag);
-        $("#id_tolerance").prop("disabled", flag);
+        $(".ed").prop("disabled", flag);
     }
 
     function load_setting() {
         $.get("./php/load.php", "", function(data) {
             if (data.length > 0) {
                 var setting = JSON.parse(data);
-                var target  = setting.target / 1000;
-                var tolerance = setting.tolerance;
+                var name = $("#id_automode").attr("checked-name");
 
                 $("#id_form").hide();
                 if (setting.automode == "1") {
                     $("#id_automode").prop("checked", true);
+                    $("#id_automode").attr("name", name);
                     disable_form(false);
+
+                    $("#id_f_h").val(setting.from_hour);
+                    $("#id_f_m").val(setting.from_minute);
+                    $("#id_f_ampm").val(setting.from_ampm);
+                    $("#id_t_h").val(setting.to_hour);
+                    $("#id_t_m").val(setting.to_minute);
+                    $("#id_t_ampm").val(setting.to_ampm);
+                    $("#id_target").val(setting.target);
+                    $("#id_tolerance").val(setting.tolerance);
                 } else {
                     $("#id_automode").prop("checked", false);
+                    $("#id_hidden").attr("name", name);
                     disable_form(true);
                 }
-                if (target < 0) {
-                    target = 0;
-                }
-                $("#id_target").val(target);
-                if (tolerance < 0) {
-                    tolerance = 0;
-                }
-                $("#id_tolerance").val(tolerance);
                 $("#id_form").show();
             }
         });
@@ -117,28 +155,30 @@
 
     $(document).ready(function() {
         $("#id_form").submit(function(e) {
-            var data = {
-                "automode": $("#id_automode").prop("checked") ? 1 : 0,
-                "target": $("#id_target").val() * 1000,
-                "tolerance": $("#id_tolerance").val()
-            };
-
             e.preventDefault();
-            $.post("./php/submit.php", data, function(data) {
+            $.post("./php/submit.php",
+                $("#id_form").serializeArray(),
+                function(data) {
                     alert(data);
             });
         });
 
         $("#id_automode").click(function() {
             $this = $(this);
+            var name = $this.attr("checked-name");
 
             if ($this.is(":checked")) {
+                $("#id_hidden").removeAttr("name");
+                $this.attr("name", name);
                 disable_form(false);
             } else {
+                $this.removeAttr("name");
+                $("#id_hidden").attr("name", name);
                 disable_form(true);
             }
         });
 
+        gen_html();
         load_setting();
         get_current_temperature();
         window.setInterval(get_current_temperature, 10000);

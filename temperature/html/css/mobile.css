@@ -2,10 +2,13 @@
     position: relative;
     margin-top:    10%;
     margin-bottom: 10%;
-    margin-left:   10%;
-    margin-right:  10%;
+    margin-left:   05%;
+    margin-right:  05%;
     padding:        2%;
     border: #AAAAAA 2px solid;
+}
+
+.ed {
 }
 
 .text_form {
