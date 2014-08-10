@@ -49,6 +49,8 @@ typedef struct {
 typedef struct {
     int is_record;
     char record[TEMP_PATH_MAX_LEN];
+    int is_file;
+    char file[TEMP_PATH_MAX_LEN];
 } TempArgs;
 
 static int fill_date_time(TimeTemp *time_temp)
@@ -312,7 +314,9 @@ static void usage(void)
     printf("Usage:\n");
     printf("    temperature [options]\n\n");
     printf("Options:\n");
-    printf("    -r  --record path   Record temperature into path/yyyy-mm-dd.txt\n\n");
+    printf("    -r  --record path   Record temperature into path/yyyy-mm-dd.txt\n");
+    printf("    -f  --file path     Write log to file instead of stdout\n");
+    printf("\n");
 
     exit(0);
 }
@@ -324,17 +328,24 @@ int TEMP_main(int argc, char *argv[])
 
     int ch;
     TempArgs temp_args;
+    FILE *fp_out;
     struct option longopts[] = {
         {"record",  required_argument,  NULL, 'r'},
+        {"file",    required_argument,  NULL, 'f'},
         {NULL,      0,                  NULL, 0}
     };
 
     memset(&temp_args, 0, sizeof(temp_args));
-    while ((ch = getopt_long(argc, argv, "r:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "r:f:", longopts, NULL)) != -1) {
         switch (ch) {
             case 'r':
                 temp_args.is_record = 1;
                 strncpy(temp_args.record, optarg, sizeof(temp_args.record));
+                break;
+
+            case 'f':
+                temp_args.is_file = 1;
+                strncpy(temp_args.file, optarg, sizeof(temp_args.file));
                 break;
 
             default:
@@ -343,6 +354,15 @@ int TEMP_main(int argc, char *argv[])
     }
     argc -= optind;
     argv += optind;
+
+    if (temp_args.is_file) {
+        fp_out = fopen(temp_args.file, "w");
+        if (fp_out == NULL) {
+            printf("Failed to open file (%s) for writting!\n", temp_args.file);
+            return -1;
+        }
+        TEMP_set_fp_out(fp_out);
+    }
 
     if (access(TEMP_SETTING_DIR, F_OK) < 0) {
         mkdir(TEMP_SETTING_DIR, 0755);
@@ -389,5 +409,8 @@ join_exit_0:
     pthread_mutex_destroy(&g_mutex_time);
     pthread_cond_destroy(&g_cond);
     pthread_mutex_destroy(&g_mutex);
+    if (temp_args.is_file) {
+        fclose(fp_out);
+    }
     return ret;
 }

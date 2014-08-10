@@ -35,5 +35,6 @@
 
 extern int  TEMP_get_debug_level(void);
 extern void TEMP_set_debug_level(int level);
+extern void TEMP_set_fp_out(FILE *fp);
 extern void TEMP_LOG(int debug_level, const char *file, int line, const char *format, ...);
 
