@@ -63,7 +63,7 @@ int json_read_file(const char *filepath, char **json)
     int size, count, ret;
 
     if (access(filepath, F_OK) < 0) {
-        TEMP_LOGD("File (%s) does not exist!\n", filepath);
+        TEMP_LOGE("File (%s) does not exist!\n", filepath);
         return -1;
     }
 
@@ -79,7 +79,7 @@ int json_read_file(const char *filepath, char **json)
 
     buffer = (char *)malloc(size * sizeof(char));
     if (buffer == NULL) {
-        TEMP_LOGE("Out of memory!\n");
+        TEMP_LOGF("Out of memory!\n");
         ret = -1;
         goto exit;
     }

@@ -59,11 +59,13 @@ static int fill_date_time(TimeTemp *time_temp)
     assert(time_temp != NULL);
 
     current_time = time(NULL);
+    TEMP_LOGV("Thread monitor lock g_mutex_time\n");
     pthread_mutex_lock(&g_mutex_time);
     time_formated = localtime(&current_time);
     strftime(time_temp->date, sizeof(time_temp->date), "%F", time_formated);
     strftime(time_temp->time, sizeof(time_temp->time), "%R", time_formated);
     pthread_mutex_unlock(&g_mutex_time);
+    TEMP_LOGV("Thread monitor unlock g_mutex_time\n");
 
     return 0;
 }
@@ -132,7 +134,7 @@ void *temp_monitor_task(void *args)
 
     while (g_process_alive) {
         int temp = TEMP_ds18b20_read(DS18B20_ADDRESS);
-        TEMP_LOGI("Current temperature is %.3f degree\n", temp / 1000.0);
+        TEMP_LOGD("Current temperature is %.3f degree\n", temp / 1000.0);
         g_current_temp = temp;
         save_temp_to_file(temp);
 
@@ -157,7 +159,7 @@ void *temp_monitor_task(void *args)
         }
         pthread_mutex_unlock(&g_mutex);
     }
-    TEMP_LOGD("Thread monitor has exited!\n");
+    TEMP_LOGI("Thread monitor has exited!\n");
     pthread_exit(NULL);
 
     return NULL;
@@ -199,11 +201,13 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
     int current_total_minute, from_total_minute, to_total_minute;
 
     current_time = time(NULL);
+    TEMP_LOGV("Thread setting lock g_mutex_time\n");
     pthread_mutex_lock(&g_mutex_time);
     time_formated = localtime(&current_time);
     current_total_minute = hour_minute_to_minute(
             time_formated->tm_hour, time_formated->tm_min);
     pthread_mutex_unlock(&g_mutex_time);
+    TEMP_LOGV("Thread setting lock g_mutex_time\n");
 
     from_hour_24 = hour_12_to_24(from_hour, from_ampm);
     from_total_minute = hour_minute_to_minute(from_hour_24, from_minute);
@@ -216,8 +220,10 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
 
     if (from_total_minute <= current_total_minute
             && current_total_minute <= to_total_minute) {
+        TEMP_LOGD("Current time is in setting time range.\n");
         return 1;
     } else {
+        TEMP_LOGD("Current time is not in setting time range.\n");
         return 0;
     }
 }
@@ -251,13 +257,13 @@ void *temp_setting_task(void *args)
 
         current = g_current_temp;
         if (current < 0) {
-            TEMP_LOGD("Current temperature (%d) is invalid!\n", current);
+            TEMP_LOGE("Current temperature (%d) is invalid!\n", current);
             continue;
         }
 
         ret = json_parse(TEMP_SETTING_JSON);
         if (ret < 0) {
-            TEMP_LOGD("Parse %s failed!\n", TEMP_SETTING_JSON);
+            TEMP_LOGE("Parse %s failed!\n", TEMP_SETTING_JSON);
             continue;
         }
 
@@ -268,7 +274,7 @@ void *temp_setting_task(void *args)
             TEMP_LOGD("Automode is disabled.\n");
             continue;
         } else {
-            TEMP_LOGD("Automode setting is invalid.\n");
+            TEMP_LOGE("Automode setting is invalid!\n");
             continue;
         }
 
@@ -278,14 +284,14 @@ void *temp_setting_task(void *args)
         to_hour     = json_get_to_hour();
         to_minute   = json_get_to_minute();
         to_ampm     = json_get_to_ampm();
-        TEMP_LOGI("from (%02d:%02d %s) to (%02d:%02d %s)\n",
+        TEMP_LOGD("Time range from (%02d:%02d %s) to (%02d:%02d %s)\n",
                 from_hour, from_minute, from_ampm,
                 to_hour, to_minute, to_ampm);
         if (current_time_in_range(from_hour, from_minute, from_ampm,
                     to_hour, to_minute, to_ampm) == 1) {
-            target      = json_get_target_temp();
-            tolerance   = json_get_tolerance_temp();
-            TEMP_LOGI("target (%d) tolerance (%d)\n", target, tolerance);
+            target    = json_get_target_temp();
+            tolerance = json_get_tolerance_temp();
+            TEMP_LOGD("Temperature target (%d) tolerance (%d)\n", target, tolerance);
             if (current > (target + tolerance)) {
                 TEMP_LOGD("Temperature is too high, turn on ac\n");
                 TEMP_ac_turn_on();
@@ -295,7 +301,7 @@ void *temp_setting_task(void *args)
             }
         }
     }
-    TEMP_LOGD("Thread setting has exited!\n");
+    TEMP_LOGI("Thread setting has exited!\n");
     pthread_exit(NULL);
 
     return NULL;
@@ -350,13 +356,13 @@ int TEMP_main(int argc, char *argv[])
     g_process_alive = 1;
     ret = pthread_create(&thread_id_monitor, NULL, temp_monitor_task, &temp_args);
     if (ret < 0) {
-        TEMP_LOGE("Create thread monitor failed!\n");
+        TEMP_LOGF("Create thread monitor failed!\n");
         ret = -1;
         goto join_exit_0;
     }
     ret = pthread_create(&thread_id_setting, NULL, temp_setting_task, NULL);
     if (ret < 0) {
-        TEMP_LOGE("Create thread setting failed!\n");
+        TEMP_LOGF("Create thread setting failed!\n");
         ret = -1;
         goto join_exit_1;
     }
@@ -366,7 +372,7 @@ int TEMP_main(int argc, char *argv[])
             remove(TEMP_SETTING_EXIT);
             pthread_mutex_lock(&g_mutex);
             g_process_alive = 0;
-            TEMP_LOGD("Process alive has been changed to 0, exiting...\n");
+            TEMP_LOGI("Process alive has been changed to 0, exiting...\n");
             pthread_cond_broadcast(&g_cond);
             pthread_mutex_unlock(&g_mutex);
             break;
