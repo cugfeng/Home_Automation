@@ -83,7 +83,7 @@ static int save_buffer_to_file(TimeTemp *buffer, int size, const char *path)
 
     for (i = 0; i < size; ++i) {
         FILE *fp;
-        char filepath[32] = {0};
+        char filepath[TEMP_PATH_MAX_LEN] = {0};
 
         strcpy(filepath, path);
         strcat(filepath, "/");
