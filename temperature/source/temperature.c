@@ -38,6 +38,7 @@ static int g_process_alive;
 static int g_current_temp = -1;
 static pthread_mutex_t g_mutex;
 static pthread_cond_t  g_cond;
+static pthread_mutex_t g_mutex_time;
 
 typedef struct {
     char date[12]; /* yyyy-mm-dd */
@@ -58,9 +59,11 @@ static int fill_date_time(TimeTemp *time_temp)
     assert(time_temp != NULL);
 
     current_time = time(NULL);
+    pthread_mutex_lock(&g_mutex_time);
     time_formated = localtime(&current_time);
     strftime(time_temp->date, sizeof(time_temp->date), "%F", time_formated);
     strftime(time_temp->time, sizeof(time_temp->time), "%R", time_formated);
+    pthread_mutex_unlock(&g_mutex_time);
 
     return 0;
 }
@@ -196,9 +199,11 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
     int current_total_minute, from_total_minute, to_total_minute;
 
     current_time = time(NULL);
+    pthread_mutex_lock(&g_mutex_time);
     time_formated = localtime(&current_time);
     current_total_minute = hour_minute_to_minute(
             time_formated->tm_hour, time_formated->tm_min);
+    pthread_mutex_unlock(&g_mutex_time);
 
     from_hour_24 = hour_12_to_24(from_hour, from_ampm);
     from_total_minute = hour_minute_to_minute(from_hour_24, from_minute);
@@ -340,6 +345,7 @@ int TEMP_main(int argc, char *argv[])
 
     pthread_mutex_init(&g_mutex, NULL);
     pthread_cond_init(&g_cond, NULL);
+    pthread_mutex_init(&g_mutex_time, NULL);
 
     g_process_alive = 1;
     ret = pthread_create(&thread_id_monitor, NULL, temp_monitor_task, &temp_args);
@@ -374,6 +380,7 @@ join_exit_2:
 join_exit_1:
     pthread_join(thread_id_monitor, NULL);
 join_exit_0:
+    pthread_mutex_destroy(&g_mutex_time);
     pthread_cond_destroy(&g_cond);
     pthread_mutex_destroy(&g_mutex);
     return ret;
