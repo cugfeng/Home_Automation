@@ -226,6 +226,7 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
     struct tm *time_formated;
     int from_hour_24, to_hour_24;
     int current_total_minute, from_total_minute, to_total_minute;
+    int in_range = 0;
 
     current_time = time(NULL);
     TEMP_LOGV("Thread setting lock g_mutex_time\n");
@@ -245,12 +246,23 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
 
     to_hour_24 = hour_12_to_24(to_hour, to_ampm);
     to_total_minute = hour_minute_to_minute(to_hour_24, to_minute);
-    if (to_total_minute < from_total_minute) {
-        to_total_minute += 24 * 60;
+
+    if (from_total_minute <= to_total_minute) {
+        if (from_total_minute <= current_total_minute
+                && current_total_minute <= to_total_minute) {
+            in_range = 1;
+        }
+    } else {
+        if ((from_total_minute <= current_total_minute)
+                && (current_total_minute <= 24 * 60)) {
+            in_range = 1;
+        } else if ((0 <= current_total_minute)
+                && (current_total_minute <= to_total_minute)) {
+            in_range = 1;
+        }
     }
 
-    if (from_total_minute <= current_total_minute
-            && current_total_minute <= to_total_minute) {
+    if (in_range) {
         TEMP_LOGD("Current time is in setting time range\n");
         return 1;
     } else {
