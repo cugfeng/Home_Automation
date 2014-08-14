@@ -16,5 +16,5 @@
  * =====================================================================================
  */
 
-extern void TEMP_ac_turn_on(void);
-extern void TEMP_ac_turn_off(void);
+extern int TEMP_ac_turn_on(void);
+extern int TEMP_ac_turn_off(void);

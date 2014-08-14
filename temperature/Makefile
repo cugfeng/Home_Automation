@@ -8,17 +8,19 @@ ifeq ($(DEBUG), true)
 else
 	CFLAGS += -Iinclude -fPIC -O2
 endif
-LDFLAGS += -Llib -lpthread
+LDFLAGS += -Llib -ltemp -lpthread
 
 MODULE_NAME := libtemp.so
 
 .PHONY: all test clean install uninstall
 
 all: $(MODULE_NAME)
-	gcc $(CFLAGS) $(LDFLAGS) -o temperature main.c -ltemp
+	gcc $(CFLAGS) -c -o main.o main.c
+	gcc -o temperature main.o $(LDFLAGS)
 
 test: $(MODULE_NAME)
-	gcc $(CFLAGS) $(LDFLAGS) -o test/test_ds18b20 test/test_ds18b20.c -ltemp
+	gcc $(CFLAGS) -c -o test/test_ds18b20.o test/test_ds18b20.c
+	gcc -o test/test_ds18b20 test/test_ds18b20.o $(LDFLAGS)
 
 clean:
 	find . -name "*.o" -o -name "*.so" | xargs rm -f

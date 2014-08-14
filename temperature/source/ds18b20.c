@@ -118,7 +118,7 @@ int TEMP_ds18b20_read(const char *address)
         return -1;
     }
 
-    memset(buf, sizeof(buf), 0);
+    memset(buf, 0, sizeof(buf));
     p_ret = fgets(buf, sizeof(buf), fp);
     if (p_ret == NULL) {
         TEMP_LOGE("Read from file (%s) failed!\n", path);
@@ -131,7 +131,7 @@ int TEMP_ds18b20_read(const char *address)
         goto close_exit;
     }
 
-    memset(buf, sizeof(buf), 0);
+    memset(buf, 0, sizeof(buf));
     p_ret = fgets(buf, sizeof(buf), fp);
     if (p_ret == NULL) {
         TEMP_LOGE("Read from file (%s) failed!\n", path);

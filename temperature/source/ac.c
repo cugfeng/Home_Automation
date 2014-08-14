@@ -16,14 +16,29 @@
  * =====================================================================================
  */
 #include <stdlib.h>
+#include "temp_debug.h"
 #include "ac.h"
 
-void TEMP_ac_turn_on(void)
+int TEMP_ac_turn_on(void)
 {
-    system("irsend SEND_ONCE AC ON_27");
+    int ret;
+
+    ret = system("irsend SEND_ONCE AC ON_27");
+    if (ret < 0) {
+        TEMP_LOGE("Turn on AC failed!\n");
+    }
+
+    return ret;
 }
 
-void TEMP_ac_turn_off(void)
+int TEMP_ac_turn_off(void)
 {
-    system("irsend SEND_ONCE AC OFF");
+    int ret;
+
+    ret = system("irsend SEND_ONCE AC OFF");
+    if (ret < 0) {
+        TEMP_LOGE("Turn off AC failed!\n");
+    }
+
+    return ret;
 }

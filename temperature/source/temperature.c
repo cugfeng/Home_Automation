@@ -151,7 +151,7 @@ void *temp_monitor_task(void *args)
             if (temp_args->is_record) {
                 save_buffer_to_file(buffer, TEMP_BUFFER_SIZE, temp_args->record);
             }
-            memset(buffer, sizeof(buffer), 0);
+            memset(buffer, 0, sizeof(buffer));
             index = 0;
         }
 
