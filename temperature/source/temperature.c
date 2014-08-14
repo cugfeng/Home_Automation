@@ -273,6 +273,8 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
 
 void *temp_setting_task(void *args)
 {
+    int in_range = 0;
+
     while (g_process_alive) {
         int current;
         int automode, target, tolerance;
@@ -342,6 +344,15 @@ void *temp_setting_task(void *args)
                 TEMP_LOGD("Temperature is too low, turn off ac\n");
                 TEMP_ac_turn_off();
             }
+
+            in_range = 1;
+        } else {
+            if (in_range) {
+                TEMP_LOGD("Current time leaves setting time range, turn off ac\n");
+                TEMP_ac_turn_off();
+            }
+
+            in_range = 0;
         }
     }
     TEMP_LOGI("Thread setting has exited!\n");
