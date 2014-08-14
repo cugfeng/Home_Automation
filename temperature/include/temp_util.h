@@ -21,6 +21,7 @@
 #define TEMP_SETTING_DIR     "/tmp/temperature"
 #define TEMP_SETTING_CURRENT "/tmp/temperature/current"
 #define TEMP_SETTING_JSON    "/tmp/temperature/setting.json"
+#define TEMP_SETTING_LEVEL   "/tmp/temperature/debug_level"
 #define TEMP_SETTING_EXIT    "/tmp/temperature/exit"
 
 #define TEMP_MONITOR_TASK_SLEEP (30)    /* second */

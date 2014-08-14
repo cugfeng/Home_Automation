@@ -21,11 +21,12 @@
 #define LOG_TAG "TEMP"
 #define LOG_BUFFER_SIZE (1024)
 
-#define LOGF (0) /* log level fatal */
-#define LOGE (1) /* log level error */
-#define LOGD (2) /* log level debug */
-#define LOGI (3) /* log level information */
-#define LOGV (4) /* log level verbose */
+#define LOGN (0) /* log level none */
+#define LOGF (1) /* log level fatal */
+#define LOGE (2) /* log level error */
+#define LOGD (3) /* log level debug */
+#define LOGI (4) /* log level information */
+#define LOGV (5) /* log level verbose */
 
 #define TEMP_DEFAULT_DEBUG_LEVEL (LOGD)
 
@@ -37,6 +38,7 @@
 
 extern int  TEMP_get_debug_level(void);
 extern void TEMP_set_debug_level(int level);
+extern int  TEMP_update_debug_level(void);
 extern void TEMP_set_fp_out(FILE *fp);
 extern void TEMP_LOG(int debug_level, const char *file, int line, const char *format, ...);
 

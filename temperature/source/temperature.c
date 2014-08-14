@@ -398,6 +398,7 @@ int TEMP_main(int argc, char *argv[])
         chmod(TEMP_SETTING_DIR, 0777);
     }
 
+    TEMP_update_debug_level();
     pthread_mutex_init(&g_mutex, NULL);
     pthread_cond_init(&g_cond, NULL);
     pthread_mutex_init(&g_mutex_time, NULL);
@@ -427,6 +428,7 @@ int TEMP_main(int argc, char *argv[])
             break;
         }
 
+        TEMP_update_debug_level();
         sleep(TEMP_MAIN_TASK_SLEEP);
     }
 
