@@ -34,6 +34,9 @@
 #define DS18B20_ADDRESS "28-00042d9aa8ff"
 #define TEMP_BUFFER_SIZE (6)
 
+static const char *AM = "AM";
+static const char *PM = "PM";
+
 static int g_process_alive;
 static int g_current_temp = -1;
 static pthread_mutex_t g_mutex;
@@ -169,24 +172,46 @@ void *temp_monitor_task(void *args)
 
 static int hour_12_to_24(int hour, const char *ampm)
 {
-    assert(1<=hour && hour <= 12);
+    assert(1 <= hour && hour <= 12);
 
-    if (strcmp(ampm, "AM") == 0) {
+    if (strcmp(ampm, AM) == 0) {
         if (hour <= 11) {
-            return hour;
+            return hour; /* 01:00 ~ 11:00 */
         } else {
-            return hour - 12;
+            return 0; /* 00:00 */
         }
-    } else if (strcmp(ampm, "PM") == 0) {
+    } else if (strcmp(ampm, PM) == 0) {
         if (hour <= 11) {
-            return hour + 12;
+            return hour + 12; /* 13:00 ~ 23:00 */
         } else {
-            return hour;
+            return 12; /* 12:00 */
         }
     } else {
         assert(0);
         return -1;
     }
+}
+
+static int hour_24_to_12(int hour)
+{
+    assert(0 <= hour && hour <= 23);
+
+    if (hour == 0) {
+        return 12; /* 12:00 AM */
+    } else if (hour <= 11) {
+        return hour; /* 01:00 AM ~ 11:00 AM */
+    } else if (hour == 12 ) {
+        return 12; /* 12:00 PM */
+    } else {
+        return hour - 12; /* 01:00 PM ~ 11:00 PM */
+    }
+}
+
+static const char *hour_24_to_ampm(int hour)
+{
+    assert(0 <= hour && hour <= 23);
+
+    return ((hour <= 11) ? AM : PM);
 }
 
 static inline int hour_minute_to_minute(int hour, int minute)
@@ -206,6 +231,10 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
     TEMP_LOGV("Thread setting lock g_mutex_time\n");
     pthread_mutex_lock(&g_mutex_time);
     time_formated = localtime(&current_time);
+    TEMP_LOGD("Current time is (%02d:%02d %s)\n",
+            hour_24_to_12(time_formated->tm_hour),
+            time_formated->tm_min,
+            hour_24_to_ampm(time_formated->tm_hour));
     current_total_minute = hour_minute_to_minute(
             time_formated->tm_hour, time_formated->tm_min);
     pthread_mutex_unlock(&g_mutex_time);
@@ -222,10 +251,10 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
 
     if (from_total_minute <= current_total_minute
             && current_total_minute <= to_total_minute) {
-        TEMP_LOGD("Current time is in setting time range.\n");
+        TEMP_LOGD("Current time is in setting time range\n");
         return 1;
     } else {
-        TEMP_LOGD("Current time is not in setting time range.\n");
+        TEMP_LOGD("Current time is not in setting time range\n");
         return 0;
     }
 }
