@@ -56,6 +56,11 @@ typedef struct {
     char file[TEMP_PATH_MAX_LEN];
 } TempArgs;
 
+typedef enum {
+    AC_OFF = 0,
+    AC_ON
+} ACStatus;
+
 static int fill_date_time(TimeTemp *time_temp)
 {
     time_t current_time;
@@ -274,6 +279,8 @@ int current_time_in_range(int from_hour, int from_minute, const char *from_ampm,
 void *temp_setting_task(void *args)
 {
     int in_range = 0;
+    int count = 0;
+    ACStatus ac_status = AC_OFF;
 
     while (g_process_alive) {
         int current;
@@ -338,18 +345,45 @@ void *temp_setting_task(void *args)
             tolerance = json_get_tolerance_temp();
             TEMP_LOGD("Temperature target (%d) tolerance (%d)\n", target, tolerance);
             if (current > (target + tolerance)) {
-                TEMP_LOGD("Temperature is too high, turn on ac\n");
-                TEMP_ac_turn_on();
+                TEMP_LOGD("Temperature is too high\n");
+                if (ac_status == AC_OFF) {
+                    TEMP_LOGD("AC is off, turn on AC\n");
+                    TEMP_ac_turn_on();
+                    ac_status = AC_ON;
+                    count = 0;
+                } else {
+                    ++count;
+                    if (count > TEMP_SETTING_COUNT_MAX) {
+                        TEMP_LOGD("Turn on AC again\n");
+                        TEMP_ac_turn_on();
+                        count = 0;
+                    }
+                }
             } else if (current < (target - tolerance)) {
-                TEMP_LOGD("Temperature is too low, turn off ac\n");
-                TEMP_ac_turn_off();
+                TEMP_LOGD("Temperature is too low\n");
+                if (ac_status == AC_ON) {
+                    TEMP_LOGD("AC is on, turn off AC\n");
+                    TEMP_ac_turn_off();
+                    ac_status = AC_OFF;
+                    count = 0;
+                } else {
+                    ++count;
+                    if (count > TEMP_SETTING_COUNT_MAX) {
+                        TEMP_LOGD("Turn off AC again\n");
+                        TEMP_ac_turn_off();
+                        count = 0;
+                    }
+                }
             }
 
             in_range = 1;
         } else {
             if (in_range) {
                 TEMP_LOGD("Current time leaves setting time range, turn off ac\n");
-                TEMP_ac_turn_off();
+                if (ac_status == AC_ON) {
+                    TEMP_ac_turn_off();
+                    ac_status = AC_OFF;
+                }
             }
 
             in_range = 0;
