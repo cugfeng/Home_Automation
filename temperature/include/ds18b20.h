@@ -15,5 +15,10 @@
  *
  * =====================================================================================
  */
+
+#ifndef TEMP_DS18B20_H
+#define TEMP_DS18B20_H
+
 extern int TEMP_ds18b20_read(const char *address);
 
+#endif /* TEMP_DS18B20_H */

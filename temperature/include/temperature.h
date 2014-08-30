@@ -16,5 +16,9 @@
  * =====================================================================================
  */
 
+#ifndef TEMP_TEMPERATURE_H
+#define TEMP_TEMPERATURE_H
+
 extern int TEMP_main(int argc, char *argv[]);
 
+#endif /* TEMP_TEMPERATURE_H */

@@ -16,5 +16,10 @@
  * =====================================================================================
  */
 
+#ifndef TEMP_AC_H
+#define TEMP_AC_H
+
 extern int TEMP_ac_turn_on(void);
 extern int TEMP_ac_turn_off(void);
+
+#endif /* TEMP_AC_H */

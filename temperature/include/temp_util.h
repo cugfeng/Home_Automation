@@ -16,6 +16,9 @@
  * =====================================================================================
  */
 
+#ifndef TEMP_UTIL_H
+#define TEMP_UTIL_H
+
 #define TEMP_PATH_MAX_LEN (128)
 
 #define TEMP_SETTING_DIR     "/tmp/temperature"
@@ -28,3 +31,5 @@
 #define TEMP_SETTING_TASK_SLEEP (60)    /* second */
 #define TEMP_MAIN_TASK_SLEEP    (03)    /* second */
 #define TEMP_SETTING_COUNT_MAX  (10)
+
+#endif /* TEMP_UTIL_H */

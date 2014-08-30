@@ -16,6 +16,9 @@
  * =====================================================================================
  */
 
+#ifndef TEMP_JSON_H
+#define TEMP_JSON_H
+
 extern int json_parse(const char *filepath);
 extern int json_get_automode(void);
 extern int json_get_target_temp(void);
@@ -26,3 +29,5 @@ extern const char *json_get_from_ampm(void);
 extern int json_get_to_hour(void);
 extern int json_get_to_minute(void);
 extern const char *json_get_to_ampm(void);
+
+#endif /* TEMP_JSON_H */

@@ -16,6 +16,9 @@
  * =====================================================================================
  */
 
+#ifndef TEMP_DEBUG_H
+#define TEMP_DEBUG_H
+
 #include <stdio.h>
 
 #define LOG_TAG "TEMP"
@@ -42,3 +45,4 @@ extern int  TEMP_update_debug_level(void);
 extern void TEMP_set_fp_out(FILE *fp);
 extern void TEMP_LOG(int debug_level, const char *file, int line, const char *format, ...);
 
+#endif /* TEMP_DEBUG_H */
